@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./smart-bi/backend/sql/create_table.sql:/docker-entrypoint-initdb.d/01-bi-create.sql
+      - ./smart-bi/backend/sql/init_data.sql:/docker-entrypoint-initdb.d/02-bi-init.sql
+      - ./ai-quiz/backend/sql/create_table.sql:/docker-entrypoint-initdb.d/03-quiz-create.sql
+      - ./ai-quiz/backend/sql/init_data.sql:/docker-entrypoint-initdb.d/04-quiz-init.sql
+      - ./online-judge/backend/sql/create_table.sql:/docker-entrypoint-initdb.d/05-oj-create.sql
+      - ./online-judge/backend/sql/init_data.sql:/docker-entrypoint-initdb.d/06-oj-init.sql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== Smart BI =====
+  bi-backend:
+    build:
+      context: ./smart-bi/backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/yubi?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      MOONSHOT_API_KEY: ${MOONSHOT_API_KEY:-}
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  bi-frontend:
+    build:
+      context: ./smart-bi/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+    depends_on:
+      - bi-backend
+
+  # ===== AI Quiz =====
+  quiz-backend:
+    build:
+      context: ./ai-quiz/backend
+      dockerfile: Dockerfile
+    ports:
+      - "8101:8101"
+    environment:
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/yudada?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  quiz-frontend:
+    build:
+      context: ./ai-quiz/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8100:80"
+    depends_on:
+      - quiz-backend
+
+  # ===== Online Judge =====
+  oj-backend:
+    build:
+      context: ./online-judge/backend
+      dockerfile: Dockerfile
+    ports:
+      - "8121:8121"
+    environment:
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/yuoj?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  oj-frontend:
+    build:
+      context: ./online-judge/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8120:80"
+    depends_on:
+      - oj-backend
+
+volumes:
+  mysql-data:

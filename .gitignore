@@ -1,0 +1,52 @@
+# ============================================================
+# .gitignore
+# ============================================================
+
+# ---- IDE ----
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# ---- OS ----
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# ---- 环境变量（含密码，绝不能提交）----
+.env
+
+# ---- Python ----
+.venv/
+__pycache__/
+*.pyc
+
+# ---- Java / Maven ----
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/wrapper/maven-wrapper.jar
+
+# ---- Node / 前端 ----
+**/node_modules/
+**/dist/
+**/.temp/
+**/.cache/
+
+# ---- 日志 ----
+*.log
+logs/
+
+# ---- 数据库备份 ----
+*.sql.bak
+*.sql.backup
+
+# ---- 敏感配置 ----
+**/application-local.yml
+**/application-prod.yml
+
+# ---- 测试产物 ----
+test_excel.xlsx
